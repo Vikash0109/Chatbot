@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+body {
+  background: #000000;
+  font-family: 'VT323', monospace;
+  letter-spacing: 1px;
+}
+
+/* Neon glow effect */
+.neon-text {
+  color: #00ff9f;
+  text-shadow:
+    0 0 5px #00ff9f,
+    0 0 10px #00ff9f,
+    0 0 20px #00ff9f,
+    0 0 40px #00ff9f;
+}
+
+/* CRT Scanlines */
+.terminal::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 255, 150, 0.08),
+    rgba(0, 255, 150, 0.08) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* Blinking cursor */
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0; }
+}
+
+.cursor {
+  animation: blink 1s infinite;
+}
