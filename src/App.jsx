@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 const API_KEY = import.meta.env.VITE_API_KEY;
-const MODEL = "gemini-3-flash-preview";
+const MODEL = import.meta.env.VITE_MODEL || "gemini-3-flash-preview";
 
 const App = () => {
   const [messages, setMessages] = useState([
@@ -20,11 +20,24 @@ const App = () => {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    const userInput = input.trim();
+    if (!userInput) return;
+
+    if (!API_KEY) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: "Missing API key. Add VITE_API_KEY in .env and restart Vite.",
+          time: new Date().toLocaleTimeString(),
+        },
+      ]);
+      return;
+    }
 
     const userMessage = {
       role: "user",
-      text: input,
+      text: userInput,
       time: new Date().toLocaleTimeString(),
     };
 
@@ -39,14 +52,13 @@ const App = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: input }] }],
+            contents: [{ parts: [{ text: userInput }] }],
             systemInstruction: {
               parts: [
                 {
                   text: `You are an intelligent, knowledgeable, and reliable AI assistant.
 
                           Your role is to help users by providing clear, accurate, and detailed explanations for any question they ask. 
-                          You have strong expertise in programming, software development, computer science, artificial intelligence, web development, system design, databases, and modern technologies.
 
                           Guidelines you must strictly follow:
                           - Always understand the user's question carefully before answering.
@@ -68,6 +80,12 @@ const App = () => {
       );
 
       const data = await response.json();
+      if (!response.ok) {
+        const apiErrorMessage =
+          data?.error?.message || `Request failed with status ${response.status}`;
+        throw new Error(apiErrorMessage);
+      }
+
       const aiText =
         data.candidates?.[0]?.content?.parts?.[0]?.text ||
         "Error generating response.";
@@ -80,12 +98,15 @@ const App = () => {
           time: new Date().toLocaleTimeString(),
         },
       ]);
-    } catch {
+    } catch (error) {
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          text: "System error. Try again.",
+          text:
+            error instanceof Error
+              ? `System error: ${error.message}`
+              : "System error. Try again.",
           time: new Date().toLocaleTimeString(),
         },
       ]);
@@ -117,8 +138,8 @@ const App = () => {
 
             <div
               className={`max-w-[80%] px-4 py-3 rounded-md border ${msg.role === "user"
-                  ? "ml-auto bg-blue-500/10 border-blue-500/30 text-blue-300"
-                  : "mr-auto bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                ? "ml-auto bg-blue-500/10 border-blue-500/30 text-blue-300"
+                : "mr-auto bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
                 }`}
             >
               <div className="text-[10px] mb-1 opacity-50">
