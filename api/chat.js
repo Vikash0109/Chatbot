@@ -1,6 +1,10 @@
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message } = req.body || {};
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ error: "Missing API key" });
+    }
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -10,11 +14,7 @@ export default async function handler(req, res) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: message }],
-            },
-          ],
+          contents: [{ parts: [{ text: message }] }],
         }),
       }
     );
@@ -26,4 +26,4 @@ export default async function handler(req, res) {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-}
+};
